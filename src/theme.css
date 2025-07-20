@@ -1,0 +1,160 @@
+/* Affiliate++ Custom Theme (Global Styles) */
+
+:root {
+  --color-primary: #2B6CB0;
+  --color-secondary: #38B2AC;
+  --color-bg: #F7FAFC;
+  --color-card-bg: #FFFFFF;
+  --color-text-primary: #2D3748;
+  --color-text-secondary: #718096;
+  --color-success: #48BB78;
+  --color-warning: #ED8936;
+  --color-danger: #E53E3E;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text-primary);
+  font-family: 'Segoe UI', 'Roboto', 'Arial', sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+a, .link {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+a:hover, .link:hover {
+  color: var(--color-secondary);
+}
+
+.btn-primary {
+  background-color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+}
+.btn-primary:hover, .btn-primary:focus {
+  background-color: #24548a !important;
+  border-color: #24548a !important;
+}
+
+.btn-secondary {
+  background-color: var(--color-secondary) !important;
+  border-color: var(--color-secondary) !important;
+}
+
+.card {
+  background: var(--color-card-bg);
+  border-radius: 1rem;
+  box-shadow: 0 2px 8px rgba(44, 62, 80, 0.07);
+  border: none;
+}
+
+.text-primary {
+  color: var(--color-primary) !important;
+}
+.text-secondary {
+  color: var(--color-secondary) !important;
+}
+.text-success {
+  color: var(--color-success) !important;
+}
+.text-warning {
+  color: var(--color-warning) !important;
+}
+.text-danger {
+  color: var(--color-danger) !important;
+}
+
+/* Alerts */
+.alert-success {
+  background: #e6fffa;
+  color: var(--color-success);
+  border: 1px solid var(--color-success);
+}
+.alert-danger {
+  background: #fff5f5;
+  color: var(--color-danger);
+  border: 1px solid var(--color-danger);
+}
+.alert-warning {
+  background: #fffaf0;
+  color: var(--color-warning);
+  border: 1px solid var(--color-warning);
+}
+
+/* Card titles */
+.card-title {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+/* Muted text */
+.text-muted, .form-text {
+  color: var(--color-text-secondary) !important;
+}
+
+/* Inputs */
+.form-control:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 0.2rem rgba(43, 108, 176, 0.15);
+}
+
+/* Navbar */
+.navbar {
+  background: var(--color-primary) !important;
+}
+.navbar .navbar-brand {
+  color: #fff !important;
+  font-size: 1.6rem;
+  letter-spacing: 1px;
+}
+.navbar .navbar-brand span {
+  color: #fff !important;
+}
+.navbar .navbar-brand .brand-secondary {
+  color: var(--color-secondary) !important;
+}
+.navbar .nav-link {
+  color: #fff !important;
+  font-weight: 500;
+  transition: color 0.2s, border-bottom 0.2s;
+  border-bottom: 2px solid transparent;
+  padding-bottom: 2px;
+}
+.navbar .nav-link:hover, .navbar .nav-link:focus {
+  color: #4FD1C5 !important; /* lighter teal */
+  border-bottom: 2px solid #4FD1C5;
+  background: none;
+}
+.navbar .nav-link.active, .navbar .nav-link[aria-current="page"] {
+  color: #4FD1C5 !important;
+  border-bottom: 2px solid #4FD1C5;
+  background: none;
+}
+
+/* Footer */
+.footer {
+  background: var(--color-primary);
+  color: #fff;
+  padding: 1.5rem 0;
+  text-align: center;
+  margin-top: 2rem;
+  border-top-left-radius: 1rem;
+  border-top-right-radius: 1rem;
+}
+
+/* Utility classes */
+.bg-primary {
+  background: var(--color-primary) !important;
+  color: #fff !important;
+}
+.bg-secondary {
+  background: var(--color-secondary) !important;
+  color: #fff !important;
+}
+.bg-card {
+  background: var(--color-card-bg) !important;
+} 

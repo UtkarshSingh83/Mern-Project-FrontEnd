@@ -6,6 +6,7 @@ import { serverEndpoint } from "../../config/config";
 import { SET_USER } from "../../redux/user/actions";
 import './PurchaseCredit.css';
 import { Modal } from "react-bootstrap";
+import { FaCoins, FaCalendarAlt, FaCrown } from 'react-icons/fa';
 
 function PurchaseCredit() {
     const dispatch = useDispatch();
@@ -102,41 +103,38 @@ function PurchaseCredit() {
                 {errors.message && <div className="alert alert-danger">{errors.message}</div>}
                 {message && <div className="alert alert-success">{message}</div>}
 
-                <div className="d-flex justify-content-between align-items-start w-100">
+                <div className="d-flex flex-wrap justify-content-between align-items-start w-100 mb-4 gap-3">
                     <div className="text-left">
-                        <h3 className="ezy__pricing10-heading">Choose Plan</h3>
-                        <p className="ezy__pricing10-sub-heading mt-3">
+                        <h3 className="ezy__pricing10-heading" style={{ color: 'var(--color-primary)' }}>Choose Plan</h3>
+                        <p className="ezy__pricing10-sub-heading mt-3" style={{ color: 'var(--color-text-secondary)' }}>
                             Flexible options: one-time credits or recurring subscriptions.
                         </p>
                     </div>
-
-                    <div className="text-right">
-                        <h3>Current Balance</h3>
-                        <p className="ezy__pricing10-sub-heading mt-3">
-                            {userDetails.credits} Credits
-                        </p>
+                    <div className="text-right ms-auto">
+                        <h4 className="fw-bold mb-1" style={{ color: 'var(--color-primary)' }}>Current Balance</h4>
+                        <div className="fs-5" style={{ color: 'var(--color-secondary)' }}>{userDetails.credits} Credits</div>
                     </div>
                 </div>
 
-
-                <div className="row">
+                <div className="row justify-content-center g-4">
                     {/* Credit Pack Card */}
-                    <div className="col-md-6 col-xl-4 mt-4 text-center">
-                        <div className="card ezy__pricing10-card p-4 border-0 rounded-0">
+                    <div className="col-md-6 col-xl-4 text-center">
+                        <div className="card ezy__pricing10-card p-4 border-0 rounded-4 shadow-sm h-100" style={{ border: '2px solid #E2E8F0', transition: 'box-shadow 0.3s', boxShadow: '0 8px 40px 0 rgba(44, 62, 80, 0.22), 0 2px 8px 0 rgba(44, 62, 80, 0.12)' }}>
                             <div className="card-body pt-4">
-                                <p className="ezy__pricing10-meta-price">
-                                    <span className="ezy__pricing10-rate">Credit Packs</span>
+                                <FaCoins size={48} style={{ color: 'var(--color-secondary)', marginBottom: 12 }} />
+                                <p className="ezy__pricing10-meta-price mb-2">
+                                    <span className="ezy__pricing10-rate" style={{ color: 'var(--color-primary)' }}>Credit Packs</span>
                                 </p>
                             </div>
                             <div className="card-body pb-4 p-0">
-                                <ul className="nav ezy__pricing10-nav flex-column">
+                                <ul className="nav ezy__pricing10-nav flex-column mb-3">
                                     {CREDIT_PACKS.map(c => (
-                                        <li className="pb-2" key={c}>
+                                        <li className="pb-2" key={c} style={{ fontWeight: 500, color: 'var(--color-text-primary)' }}>
                                             {c} CREDITS FOR ₹{c}
                                         </li>
                                     ))}
                                 </ul>
-                                <button className="btn btn-primary" onClick={() => setShowModal(true)}>
+                                <button className="btn btn-primary w-100 py-2 fw-semibold shadow-sm" onClick={() => setShowModal(true)}>
                                     Buy Credits
                                 </button>
                             </div>
@@ -144,20 +142,21 @@ function PurchaseCredit() {
                     </div>
 
                     {/* Monthly Plan */}
-                    <div className="col-md-6 col-xl-4 mt-4 text-center">
-                        <div className="card ezy__pricing10-card p-4 border-0 rounded-0">
+                    <div className="col-md-6 col-xl-4 text-center">
+                        <div className="card ezy__pricing10-card p-4 border-0 rounded-4 shadow-sm h-100" style={{ border: '2px solid #E2E8F0', transition: 'box-shadow 0.3s', boxShadow: '0 8px 40px 0 rgba(44, 62, 80, 0.22), 0 2px 8px 0 rgba(44, 62, 80, 0.12)' }}>
                             <div className="card-body pt-4">
-                                <p className="ezy__pricing10-meta-price">
-                                    <span className="ezy__pricing10-rate">₹199/month</span>
+                                <FaCalendarAlt size={48} style={{ color: 'var(--color-secondary)', marginBottom: 12 }} />
+                                <p className="ezy__pricing10-meta-price mb-2">
+                                    <span className="ezy__pricing10-rate" style={{ color: 'var(--color-primary)' }}>₹199/month</span>
                                 </p>
                             </div>
                             <div className="card-body pb-4 p-0">
-                                <ul className="nav ezy__pricing10-nav flex-column">
+                                <ul className="nav ezy__pricing10-nav flex-column mb-3">
                                     {pricingList[1].list.map((item, i) => (
-                                        <li className="pb-2" key={i}>{item.detail}</li>
+                                        <li className="pb-2" key={i} style={{ color: 'var(--color-text-primary)' }}>{item.detail}</li>
                                     ))}
                                 </ul>
-                                <button className="btn btn-primary" onClick={() => handleSubscribe('UNLIMITED_MONTHLY')}>
+                                <button className="btn btn-primary w-100 py-2 fw-semibold shadow-sm" onClick={() => handleSubscribe('UNLIMITED_MONTHLY')}>
                                     Subscribe Monthly
                                 </button>
                             </div>
@@ -165,20 +164,21 @@ function PurchaseCredit() {
                     </div>
 
                     {/* Yearly Plan */}
-                    <div className="col-md-6 col-xl-4 mt-4 text-center">
-                        <div className="card ezy__pricing10-card p-4 border-0 rounded-0">
+                    <div className="col-md-6 col-xl-4 text-center">
+                        <div className="card ezy__pricing10-card p-4 border-0 rounded-4 shadow-sm h-100" style={{ border: '2px solid #E2E8F0', transition: 'box-shadow 0.3s', boxShadow: '0 8px 40px 0 rgba(44, 62, 80, 0.22), 0 2px 8px 0 rgba(44, 62, 80, 0.12)' }}>
                             <div className="card-body pt-4">
-                                <p className="ezy__pricing10-meta-price">
-                                    <span className="ezy__pricing10-rate">₹1990/year</span>
+                                <FaCrown size={48} style={{ color: 'var(--color-secondary)', marginBottom: 12 }} />
+                                <p className="ezy__pricing10-meta-price mb-2">
+                                    <span className="ezy__pricing10-rate" style={{ color: 'var(--color-primary)' }}>₹1990/year</span>
                                 </p>
                             </div>
                             <div className="card-body pb-4 p-0">
-                                <ul className="nav ezy__pricing10-nav flex-column">
+                                <ul className="nav ezy__pricing10-nav flex-column mb-3">
                                     {pricingList[2].list.map((item, i) => (
-                                        <li className="pb-2" key={i}>{item.detail}</li>
+                                        <li className="pb-2" key={i} style={{ color: 'var(--color-text-primary)' }}>{item.detail}</li>
                                     ))}
                                 </ul>
-                                <button className="btn btn-primary" onClick={() => handleSubscribe('UNLIMITED_YEARLY')}>
+                                <button className="btn btn-primary w-100 py-2 fw-semibold shadow-sm" onClick={() => handleSubscribe('UNLIMITED_YEARLY')}>
                                     Subscribe Yearly
                                 </button>
                             </div>

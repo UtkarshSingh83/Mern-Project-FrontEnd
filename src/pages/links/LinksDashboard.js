@@ -9,6 +9,7 @@ import { serverEndpoint } from '../../config/config';
 import { Modal } from 'react-bootstrap';
 import { usePermission } from '../../rbac/userPermissions';
 import { useNavigate } from 'react-router-dom';
+import Tooltip from '@mui/material/Tooltip';
 
 function LinksDashboard() {
     const [errors, setErrors] = useState({});
@@ -198,128 +199,221 @@ function LinksDashboard() {
 
     return (
         <div className="container py-4">
-            <div className="d-flex justify-content-between mb-3">
-                <h2>Manage Affiliate Links</h2>
-                {permission.canCreateLink && (
-                    <button className="btn btn-primary btn-sm" onClick={() => handleOpenModal(false)}>
-                        Add
-                    </button>
-                )}
-            </div>
+            <div className="row justify-content-center">
+                <div className="col-12" style={{ maxWidth: 1400, margin: '0 auto' }}>
+                    <div
+                        className="bg-white rounded-4"
+                        style={{ padding: 36, marginTop: 40, boxShadow: '0 6px 32px 0 rgba(44, 62, 80, 0.18), 0 1.5px 6px 0 rgba(44, 62, 80, 0.10)' }}
+                    >
+                        <div className="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+                            <div>
+                                <h2 className="mb-1" style={{ fontSize: '2rem', fontWeight: 600, color: '#2D3748' }}>
+                                    Manage Affiliate Links
+                                </h2>
+                                <div className="text-muted" style={{ fontSize: '1rem' }}>
+                                    View, add, and manage all your affiliate links in one place.
+                                </div>
+                            </div>
+                            {permission.canCreateLink && (
+                                <button
+                                    className="bg-primary text-white px-4 py-2 rounded-md shadow-sm border-0 fw-semibold"
+                                    style={{ background: '#2B6CB0', transition: 'background 0.2s' }}
+                                    onMouseOver={e => (e.currentTarget.style.background = '#24548a')}
+                                    onMouseOut={e => (e.currentTarget.style.background = '#2B6CB0')}
+                                    onClick={() => handleOpenModal(false)}
+                                >
+                                    + Add Link
+                                </button>
+                            )}
+                        </div>
 
-            {errors.message && (
-                <div className="alert alert-danger" role="alert">
-                    {errors.message}
+                        {errors.message && (
+                            <div className="alert alert-danger my-3" role="alert">
+                                {errors.message}
+                            </div>
+                        )}
+
+                        <div className="table-responsive" style={{ overflowX: 'auto', marginTop: 24 }}>
+                            <div style={{ height: 400, width: '100%' }}>
+                                <table className="table align-middle mb-0">
+                                    <thead>
+                                        <tr style={{ background: '#F7FAFC' }}>
+                                            <th className="text-uppercase text-sm fw-semibold text-secondary py-3" style={{ color: '#718096', letterSpacing: 1 }}>Campaign</th>
+                                            <th className="text-uppercase text-sm fw-semibold text-secondary py-3" style={{ color: '#718096', letterSpacing: 1 }}>URL</th>
+                                            <th className="text-uppercase text-sm fw-semibold text-secondary py-3" style={{ color: '#718096', letterSpacing: 1 }}>Category</th>
+                                            <th className="text-uppercase text-sm fw-semibold text-secondary py-3" style={{ color: '#718096', letterSpacing: 1 }}>Clicks</th>
+                                            <th className="text-uppercase text-sm fw-semibold text-secondary py-3 text-end" style={{ color: '#718096', letterSpacing: 1, minWidth: 120 }}>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {linksData.length === 0 && (
+                                            <tr>
+                                                <td colSpan={5} className="text-center text-muted py-4">No affiliate links found.</td>
+                                            </tr>
+                                        )}
+                                        {linksData.map((row, idx) => (
+                                            <tr
+                                                key={row._id}
+                                                style={{ background: idx % 2 === 0 ? '#fff' : '#F7FAFC', transition: 'background 0.2s' }}
+                                                className="table-row"
+                                            >
+                                                <td className="fw-semibold" style={{ color: '#2D3748' }}>{row.campaignTitle}</td>
+                                                <td>
+                                                    <a
+                                                        href={`${serverEndpoint}/links/r/${row._id}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-decoration-none"
+                                                        style={{ color: '#2B6CB0', wordBreak: 'break-all' }}
+                                                        onMouseOver={e => (e.currentTarget.style.textDecoration = 'underline')}
+                                                        onMouseOut={e => (e.currentTarget.style.textDecoration = 'none')}
+                                                    >
+                                                        {row.originalUrl}
+                                                    </a>
+                                                </td>
+                                                <td style={{ color: '#2D3748' }}>{row.category}</td>
+                                                <td style={{ color: '#2D3748' }}>{row.clickCount}</td>
+                                                <td className="text-end">
+                                                    {permission.canEditLink && (
+                                                        <Tooltip title="Edit" arrow>
+                                                            <span>
+                                                                <IconButton
+                                                                    onClick={() => handleOpenModal(true, row)}
+                                                                    style={{ color: '#718096', transition: 'color 0.2s, background 0.2s', borderRadius: '50%' }}
+                                                                    onMouseOver={e => (e.currentTarget.style.color = '#2B6CB0')}
+                                                                    onMouseOut={e => (e.currentTarget.style.color = '#718096')}
+                                                                >
+                                                                    <EditIcon />
+                                                                </IconButton>
+                                                            </span>
+                                                        </Tooltip>
+                                                    )}
+                                                    {permission.canDeleteLink && (
+                                                        <Tooltip title="Delete" arrow>
+                                                            <span>
+                                                                <IconButton
+                                                                    onClick={() => handleShowDeleteModal(row._id)}
+                                                                    style={{ color: '#718096', transition: 'color 0.2s, background 0.2s', borderRadius: '50%' }}
+                                                                    onMouseOver={e => (e.currentTarget.style.color = '#E53E3E')}
+                                                                    onMouseOut={e => (e.currentTarget.style.color = '#718096')}
+                                                                >
+                                                                    <DeleteIcon />
+                                                                </IconButton>
+                                                            </span>
+                                                        </Tooltip>
+                                                    )}
+                                                    {permission.canViewLink && (
+                                                        <Tooltip title="View Analytics" arrow>
+                                                            <span>
+                                                                <IconButton
+                                                                    onClick={() => navigate(`/analytics/${row._id}`)}
+                                                                    style={{ color: '#718096', transition: 'color 0.2s, background 0.2s', borderRadius: '50%' }}
+                                                                    onMouseOver={e => (e.currentTarget.style.color = '#2B6CB0')}
+                                                                    onMouseOut={e => (e.currentTarget.style.color = '#718096')}
+                                                                >
+                                                                    <AssessmentIcon />
+                                                                </IconButton>
+                                                            </span>
+                                                        </Tooltip>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <Modal show={showModal} onHide={() => handleCloseModal()}>
+                            <Modal.Header closeButton>
+                                <Modal.Title>
+                                    {isEdit ? (<>Update Link</>) : (<>Add Link</>)}
+                                </Modal.Title>
+                            </Modal.Header>
+
+                            <Modal.Body>
+                                <form onSubmit={handleSubmit}>
+                                    <div className="mb-3">
+                                        <label htmlFor="campaignTitle" className="form-label">Campaign Title</label>
+                                        <input
+                                            type="text"
+                                            className={`form-control ${errors.campaignTitle ? 'is-invalid' : ''}`}
+                                            id="campaignTitle"
+                                            name="campaignTitle"
+                                            value={formData.campaignTitle}
+                                            onChange={handleChange}
+                                        />
+                                        {errors.campaignTitle && (
+                                            <div className="invalid-feedback">
+                                                {errors.campaignTitle}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="mb-3">
+                                        <label htmlFor="originalUrl" className="form-label">URL</label>
+                                        <input
+                                            type="text"
+                                            className={`form-control ${errors.originalUrl ? 'is-invalid' : ''}`}
+                                            id="originalUrl"
+                                            name="originalUrl"
+                                            value={formData.originalUrl}
+                                            onChange={handleChange}
+                                        />
+                                        {errors.originalUrl && (
+                                            <div className="invalid-feedback">
+                                                {errors.originalUrl}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="mb-3">
+                                        <label htmlFor="category" className="form-label">Category</label>
+                                        <input
+                                            type="text"
+                                            className={`form-control ${errors.category ? 'is-invalid' : ''}`}
+                                            id="category"
+                                            name="category"
+                                            value={formData.category}
+                                            onChange={handleChange}
+                                        />
+                                        {errors.category && (
+                                            <div className="invalid-feedback">
+                                                {errors.category}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="d-grid">
+                                        <button type="submit" className="btn btn-primary">Submit</button>
+                                    </div>
+                                </form>
+                            </Modal.Body>
+                        </Modal>
+
+                        <Modal show={showDeleteModal} onHide={() => handleCloseDeleteModal()}>
+                            <Modal.Header closeButton>
+                                <Modal.Title>Confirm Delete</Modal.Title>
+                            </Modal.Header>
+                            <Modal.Body>
+                                <p>Are you sure you want to delete the link?</p>
+                            </Modal.Body>
+                            <Modal.Footer>
+                                <button className='btn btn-secondary'
+                                    onClick={() => handleCloseDeleteModal()}
+                                >
+                                    Cancel
+                                </button>
+                                <button className='btn btn-danger'
+                                    onClick={() => handleDelete()}
+                                >
+                                    Delete
+                                </button>
+                            </Modal.Footer>
+                        </Modal>
+                    </div>
                 </div>
-            )}
-
-            <div style={{ height: 500, width: '100%' }}>
-                <DataGrid
-                    getRowId={(row) => row._id}
-                    rows={linksData}
-                    columns={columns}
-                    initialState={{
-                        pagination: {
-                            paginationModel: { pageSize: 20, page: 0 }
-                        }
-                    }}
-                    pageSizeOptions={[20, 50, 100]}
-                    disableRowSelectionOnClick
-                    showToolbar
-                    sx={{
-                        fontFamily: 'inherit'
-                    }}
-                    density='compact'
-                />
             </div>
-
-            <Modal show={showModal} onHide={() => handleCloseModal()}>
-                <Modal.Header closeButton>
-                    <Modal.Title>
-                        {isEdit ? (<>Update Link</>) : (<>Add Link</>)}
-                    </Modal.Title>
-                </Modal.Header>
-
-                <Modal.Body>
-                    <form onSubmit={handleSubmit}>
-                        <div className="mb-3">
-                            <label htmlFor="campaignTitle" className="form-label">Campaign Title</label>
-                            <input
-                                type="text"
-                                className={`form-control ${errors.campaignTitle ? 'is-invalid' : ''}`}
-                                id="campaignTitle"
-                                name="campaignTitle"
-                                value={formData.campaignTitle}
-                                onChange={handleChange}
-                            />
-                            {errors.campaignTitle && (
-                                <div className="invalid-feedback">
-                                    {errors.campaignTitle}
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="mb-3">
-                            <label htmlFor="originalUrl" className="form-label">URL</label>
-                            <input
-                                type="text"
-                                className={`form-control ${errors.originalUrl ? 'is-invalid' : ''}`}
-                                id="originalUrl"
-                                name="originalUrl"
-                                value={formData.originalUrl}
-                                onChange={handleChange}
-                            />
-                            {errors.originalUrl && (
-                                <div className="invalid-feedback">
-                                    {errors.originalUrl}
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="mb-3">
-                            <label htmlFor="category" className="form-label">Category</label>
-                            <input
-                                type="text"
-                                className={`form-control ${errors.category ? 'is-invalid' : ''}`}
-                                id="category"
-                                name="category"
-                                value={formData.category}
-                                onChange={handleChange}
-                            />
-                            {errors.category && (
-                                <div className="invalid-feedback">
-                                    {errors.category}
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="d-grid">
-                            <button type="submit" className="btn btn-primary">Submit</button>
-                        </div>
-                    </form>
-                </Modal.Body>
-            </Modal>
-
-            <Modal show={showDeleteModal} onHide={() => handleCloseDeleteModal()}>
-                <Modal.Header closeButton>
-                    <Modal.Title>Confirm Delete</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    <p>Are you sure you want to delete the link?</p>
-                </Modal.Body>
-                <Modal.Footer>
-                    <button className='btn btn-secondary'
-                        onClick={() => handleCloseDeleteModal()}
-                    >
-                        Cancel
-                    </button>
-                    <button className='btn btn-danger'
-                        onClick={() => handleDelete()}
-                    >
-                        Delete
-                    </button>
-                </Modal.Footer>
-            </Modal>
         </div>
     );
 }

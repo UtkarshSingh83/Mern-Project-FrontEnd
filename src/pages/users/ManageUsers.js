@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { serverEndpoint } from "../../config/config";
 import { Modal } from 'react-bootstrap';
+import Tooltip from '@mui/material/Tooltip';
 
 const USER_ROLES = ['viewer', 'developer'];
 
@@ -188,143 +189,201 @@ function ManageUsers() {
 
     return (
         <div className="container py-4">
-
-            <div className="d-flex justify-content-between mb-3">
-                <h2>Manage Users</h2>
-                <button className='btn btn-primary btn-sm' onClick={() => handleModalShow(false)}>Add</button>
-            </div>
-
-            {errors.message && (
-                <div className="alert alert-danger" role="alert">
-                    {errors.message}
-                </div>
-            )}
-
-            <div style={{ height: 500, width: '100%' }}>
-                <DataGrid
-                    getRowId={(row) => row._id}
-                    rows={usersData}
-                    columns={columns}
-                    initialState={{
-                        pagination: {
-                            paginationModel: { pageSize: 20, page: 0 },
-                        },
-                    }}
-                    pageSizeOptions={[20, 50, 100]}
-                    disableRowSelectionOnClick
-                    showToolbar
-                    sx={{
-                        fontFamily: 'inherit'
-                    }}
-                    loading={loading}
-                />
-            </div>
-
-            <Modal show={showModal} onHide={handleModalClose}>
-                <Modal.Header closeButton>
-                    <Modal.Title>{isEdit ? (<>Edit User</>) : (<>Add User</>)}</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    <form onSubmit={handleSubmit}>
-                        <div className="mb-3">
-                            <label htmlFor="email" className="form-label">Email</label>
-                            <input
-                                type="text"
-                                className={`form-control ${errors.email ? 'is-invalid' : ''}`}
-                                id="email"
-                                name="email"
-                                value={formData.email}
-                                onChange={handleChange}
-                            />
-                            {errors.email && (
-                                <div className="invalid-feedback">
-                                    {errors.email}
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="mb-3">
-                            <label htmlFor="name" className="form-label">Name</label>
-                            <input
-                                type="text"
-                                className={`form-control ${errors.name ? 'is-invalid' : ''}`}
-                                id="name"
-                                name="name"
-                                value={formData.name}
-                                onChange={handleChange}
-                            />
-                            {errors.name && (
-                                <div className="invalid-feedback">
-                                    {errors.name}
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="mb-3">
-                            <label htmlFor="role" className="form-label">Role</label>
-                            <select name="role" value={formData.role}
-                                onChange={handleChange}
-                                className={`form-control ${errors.role ? 'is-invalid' : ''}`}
+            <div className="row justify-content-center">
+                <div className="col-12" style={{ maxWidth: 1400, margin: '0 auto' }}>
+                    <div
+                        className="bg-white rounded-4"
+                        style={{ padding: 36, marginTop: 40, boxShadow: '0 6px 32px 0 rgba(44, 62, 80, 0.18), 0 1.5px 6px 0 rgba(44, 62, 80, 0.10)' }}
+                    >
+                        <div className="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+                            <h2 className="mb-1" style={{ fontSize: '2rem', fontWeight: 600, color: '#2D3748' }}>
+                                Manage Users
+                            </h2>
+                            <button
+                                className="bg-primary text-white px-4 py-2 rounded-md shadow-sm border-0 fw-semibold"
+                                style={{ background: '#2B6CB0', transition: 'background 0.2s' }}
+                                onMouseOver={e => (e.currentTarget.style.background = '#24548a')}
+                                onMouseOut={e => (e.currentTarget.style.background = '#2B6CB0')}
+                                onClick={() => handleModalShow(false)}
                             >
-                                <option key="select" value="">
-                                    Select
-                                </option>
-                                {USER_ROLES.map((role) => (
-                                    <option key={role} value={role}>
-                                        {role.charAt(0).toUpperCase() + role.slice(1)}
-                                    </option>
-                                ))}
-                            </select>
-                            {errors.role && (
-                                <div className="invalid-feedback">
-                                    {errors.role}
-                                </div>
-                            )}
+                                + Add User
+                            </button>
                         </div>
 
-                        <div className="d-grid">
-                            {formLoading ? (
-                                <button className="btn btn-primary" type="button" disabled="">
-                                    <span className="spinner-border spinner-border-sm" aria-hidden="true" />
-                                    <span className="visually-hidden" role="status">
-                                        Loading...
-                                    </span>
+                        {errors.message && (
+                            <div className="alert alert-danger my-3" role="alert">
+                                {errors.message}
+                            </div>
+                        )}
+
+                        <div className="table-responsive" style={{ overflowX: 'auto', marginTop: 24 }}>
+                            <div style={{ height: 400, width: '100%' }}>
+                                <table className="table align-middle mb-0">
+                                    <thead>
+                                        <tr style={{ background: '#F7FAFC' }}>
+                                            <th className="text-uppercase text-sm fw-semibold text-secondary py-3" style={{ color: '#38B2AC', letterSpacing: 1 }}>Email</th>
+                                            <th className="text-uppercase text-sm fw-semibold text-secondary py-3" style={{ color: '#38B2AC', letterSpacing: 1 }}>Name</th>
+                                            <th className="text-uppercase text-sm fw-semibold text-secondary py-3" style={{ color: '#38B2AC', letterSpacing: 1 }}>Role</th>
+                                            <th className="text-uppercase text-sm fw-semibold text-secondary py-3 text-end" style={{ color: '#38B2AC', letterSpacing: 1, minWidth: 120 }}>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {usersData.length === 0 && (
+                                            <tr>
+                                                <td colSpan={4} className="text-center text-muted py-4">No users found.</td>
+                                            </tr>
+                                        )}
+                                        {usersData.map((row, idx) => (
+                                            <tr
+                                                key={row._id}
+                                                style={{ background: idx % 2 === 0 ? '#fff' : '#F7FAFC', transition: 'background 0.2s' }}
+                                                className="table-row"
+                                            >
+                                                <td className="fw-semibold" style={{ color: '#2D3748' }}>{row.email}</td>
+                                                <td style={{ color: '#2D3748' }}>{row.name}</td>
+                                                <td style={{ color: '#2D3748' }}>{row.role}</td>
+                                                <td className="text-end">
+                                                    <Tooltip title="Edit" arrow>
+                                                        <span>
+                                                            <IconButton
+                                                                onClick={() => handleModalShow(true, row)}
+                                                                style={{ color: '#718096', transition: 'color 0.2s, background 0.2s', borderRadius: '50%' }}
+                                                                onMouseOver={e => (e.currentTarget.style.color = '#2B6CB0')}
+                                                                onMouseOut={e => (e.currentTarget.style.color = '#718096')}
+                                                            >
+                                                                <EditIcon />
+                                                            </IconButton>
+                                                        </span>
+                                                    </Tooltip>
+                                                    <Tooltip title="Delete" arrow>
+                                                        <span>
+                                                            <IconButton
+                                                                onClick={() => handleDeleteModalShow(row._id)}
+                                                                style={{ color: '#718096', transition: 'color 0.2s, background 0.2s', borderRadius: '50%' }}
+                                                                onMouseOver={e => (e.currentTarget.style.color = '#E53E3E')}
+                                                                onMouseOut={e => (e.currentTarget.style.color = '#718096')}
+                                                            >
+                                                                <DeleteIcon />
+                                                            </IconButton>
+                                                        </span>
+                                                    </Tooltip>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        {/* Modals remain unchanged */}
+                        <Modal show={showModal} onHide={handleModalClose}>
+                            <Modal.Header closeButton>
+                                <Modal.Title>{isEdit ? (<>Edit User</>) : (<>Add User</>)}</Modal.Title>
+                            </Modal.Header>
+                            <Modal.Body>
+                                <form onSubmit={handleSubmit}>
+                                    <div className="mb-3">
+                                        <label htmlFor="email" className="form-label">Email</label>
+                                        <input
+                                            type="text"
+                                            className={`form-control ${errors.email ? 'is-invalid' : ''}`}
+                                            id="email"
+                                            name="email"
+                                            value={formData.email}
+                                            onChange={handleChange}
+                                        />
+                                        {errors.email && (
+                                            <div className="invalid-feedback">
+                                                {errors.email}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="mb-3">
+                                        <label htmlFor="name" className="form-label">Name</label>
+                                        <input
+                                            type="text"
+                                            className={`form-control ${errors.name ? 'is-invalid' : ''}`}
+                                            id="name"
+                                            name="name"
+                                            value={formData.name}
+                                            onChange={handleChange}
+                                        />
+                                        {errors.name && (
+                                            <div className="invalid-feedback">
+                                                {errors.name}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="mb-3">
+                                        <label htmlFor="role" className="form-label">Role</label>
+                                        <select name="role" value={formData.role}
+                                            onChange={handleChange}
+                                            className={`form-control ${errors.role ? 'is-invalid' : ''}`}
+                                        >
+                                            <option key="select" value="">
+                                                Select
+                                            </option>
+                                            {USER_ROLES.map((role) => (
+                                                <option key={role} value={role}>
+                                                    {role.charAt(0).toUpperCase() + role.slice(1)}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        {errors.role && (
+                                            <div className="invalid-feedback">
+                                                {errors.role}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="d-grid">
+                                        {formLoading ? (
+                                            <button className="btn btn-primary" type="button" disabled="">
+                                                <span className="spinner-border spinner-border-sm" aria-hidden="true" />
+                                                <span className="visually-hidden" role="status">
+                                                    Loading...
+                                                </span>
+                                            </button>
+                                        ) : (
+                                            <button type="submit" className="btn btn-primary">Submit</button>
+                                        )}
+
+                                    </div>
+                                </form>
+                            </Modal.Body>
+                        </Modal>
+
+                        <Modal show={showDeleteModal} onHide={() => setShowDeleteModal()}>
+                            <Modal.Header closeButton>
+                                <Modal.Title>Confirm Delete</Modal.Title>
+                            </Modal.Header>
+                            <Modal.Body>
+                                Are you sure you want to delete this link?
+                            </Modal.Body>
+                            <Modal.Footer>
+                                <button className="btn btn-secondary" onClick={() => setShowDeleteModal()}>
+                                    Cancel
                                 </button>
-                            ) : (
-                                <button type="submit" className="btn btn-primary">Submit</button>
-                            )}
+                                {formLoading ? (
+                                    <button className="btn btn-danger" type="button" disabled="">
+                                        <span className="spinner-border spinner-border-sm" aria-hidden="true" />
+                                        <span className="visually-hidden" role="status">
+                                            Loading...
+                                        </span>
+                                    </button>
+                                ) : (
+                                    <button className="btn btn-danger" onClick={handleDeleteSubmit}>
+                                        Delete
+                                    </button>
+                                )}
 
-                        </div>
-                    </form>
-                </Modal.Body>
-            </Modal>
-
-            <Modal show={showDeleteModal} onHide={() => setShowDeleteModal()}>
-                <Modal.Header closeButton>
-                    <Modal.Title>Confirm Delete</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    Are you sure you want to delete this link?
-                </Modal.Body>
-                <Modal.Footer>
-                    <button className="btn btn-secondary" onClick={() => setShowDeleteModal()}>
-                        Cancel
-                    </button>
-                    {formLoading ? (
-                        <button className="btn btn-danger" type="button" disabled="">
-                            <span className="spinner-border spinner-border-sm" aria-hidden="true" />
-                            <span className="visually-hidden" role="status">
-                                Loading...
-                            </span>
-                        </button>
-                    ) : (
-                        <button className="btn btn-danger" onClick={handleDeleteSubmit}>
-                            Delete
-                        </button>
-                    )}
-
-                </Modal.Footer>
-            </Modal>
+                            </Modal.Footer>
+                        </Modal>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 }
