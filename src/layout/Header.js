@@ -5,7 +5,7 @@ function Header() {
         <nav className="navbar navbar-expand-lg shadow-sm">
             <div className="container">
                 <Link className="navbar-brand fw-bold" to="/">
-                    <span>Affiliate</span><span className="brand-secondary">++</span>
+                    <span>LinkSage</span><span className="brand-secondary"></span>
                 </Link>
                 <button
                     className="navbar-toggler"

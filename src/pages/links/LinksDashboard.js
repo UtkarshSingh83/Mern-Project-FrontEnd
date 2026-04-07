@@ -9,6 +9,8 @@ import { serverEndpoint } from '../../config/config';
 import { Modal } from 'react-bootstrap';
 import { usePermission } from '../../rbac/userPermissions';
 import { useNavigate } from 'react-router-dom';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import CheckIcon from '@mui/icons-material/Check';
 import Tooltip from '@mui/material/Tooltip';
 
 function LinksDashboard() {
@@ -21,6 +23,19 @@ function LinksDashboard() {
 
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const permission = usePermission();
+
+    const [thumbnailFile, setThumbnailFile] = useState(null);
+    const [previewUrl, setPreviewUrl] = useState('');
+
+    const [loading, setLoading] = useState(false);
+    const [currentPage, setcurrentPage] = useState(0);
+    const [pageSize, setPageSize] = useState(2);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [totalRecords, setTotalRecords] = useState(0);
+    const [sortModel, setSortModel] = useState([
+        { field: 'createdAt', sort: 'desc' }
+    ]);
+    const [copiedId, setCopiedId] = useState(null);
 
     const handleShowDeleteModal = (linkId) => {
         setFormData({
@@ -105,6 +120,7 @@ function LinksDashboard() {
         event.preventDefault();
 
         if (validate()) {
+            setLoading(true);
             const body = {
                 campaign_title: formData.campaignTitle,
                 original_url: formData.originalUrl,
@@ -114,6 +130,13 @@ function LinksDashboard() {
                 withCredentials: true
             };
             try {
+                let thumbnailUrl = '';
+                if (thumbnailFile) {
+                    thumbnailUrl = await uploadToCloudinary(thumbnailFile);
+                    body.thumbnail = thumbnailUrl;
+                }
+
+
                 if (isEdit) {
                     await axios.put(
                         `${serverEndpoint}/links/${formData.id}`,
@@ -130,6 +153,8 @@ function LinksDashboard() {
                     originalUrl: "",
                     category: ""
                 });
+                setThumbnailFile(null);
+                setPreviewUrl('');
             } catch (error) {
                 setErrors({ message: error.response?.data?.message || 'Unable to add the Link, please try again' });
             } finally {
@@ -138,28 +163,75 @@ function LinksDashboard() {
         }
     };
 
+    const uploadToCloudinary = async () => {
+        const { data } = await axios.post(`${serverEndpoint}/links/generate-upload-signature`, {},
+            { withCredentials: true });
+
+        const formData = new FormData();
+        formData.append("file", thumbnailFile);
+        formData.append("signature", data.signature);
+        formData.append("api_key", data.apiKey);
+        formData.append("timestamp", data.timestamp);
+
+        const response = await axios.post(
+            `https://api.cloudinary.com/v1_1/${data.cloudName}/image/upload`,
+            formData
+        );
+
+        return response.data.secure_url;
+    };
+
     const fetchLinks = async () => {
         try {
+            setLoading(true);
+
+            const sortField = sortModel[0]?.field || 'createdAt';
+            const sortOrder = sortModel[0]?.field || 'desc';
+
+            const params = {
+                currentPage: currentPage,
+                pageSize: pageSize,
+                searchQuery: searchQuery,
+                sortField: sortField,
+                sortOrder: sortOrder
+            };
+
             const response = await axios.get(`${serverEndpoint}/links`, {
+                params: params,
                 withCredentials: true
             });
-            setLinksData(response.data.data);
+            setLinksData(response.data.links);
+            setTotalRecords(response.data.total);
         } catch (error) {
             console.log(error);
             setErrors({ message: 'Unable to fetch links at the moment. Please try again' });
+        } finally {
+            setLoading(false);
         }
     };
 
+    // Anything mentioned in the dependancy array of useEffect will trigger
+    // useeffect execution if there is any change in any value.
     useEffect(() => {
         fetchLinks();
-    }, []);
+    }, [currentPage, pageSize, searchQuery, sortModel]);
 
     const columns = [
-        { field: 'campaignTitle', headerName: 'Campaign', flex: 2 },
         {
-            field: 'originalUrl', headerName: 'URL', flex: 3, renderCell: (params) => (
+            field: 'thumbnail', headerName: 'Thumbnail', sortable: false, flex: 1.5,
+            renderCell: (params) => (
+                params.row.thumbnail ? (
+                    <img src={params.row.thumbnail} alt='thumbnail' style={{ maxHeight: '45px' }} />
+                ) : (
+                    <span style={{ color: '#888' }}>No Image</span>
+                )
+            ),
+        },
+        { field: 'campaignTitle', headerName: 'Campaign', flex: 1.5 },
+        {
+            field: 'originalUrl', headerName: 'Original URL', flex: 3, renderCell: (params) => (
                 <>
-                    <a href={`${serverEndpoint}/links/r/${params.row._id}`}
+                    <a href={params.row.originalUrl}
                         target='_blank'
                         rel="noopener noreferrer"
                     >
@@ -171,7 +243,7 @@ function LinksDashboard() {
         { field: 'category', headerName: 'Category', flex: 2 },
         { field: 'clickCount', headerName: 'Clicks', flex: 1 },
         {
-            field: 'action', headerName: 'Clicks', flex: 1, renderCell: (params) => (
+            field: 'action', headerName: 'Actions', flex: 2, sortable: false, renderCell: (params) => (
                 <>
                     {permission.canEditLink && (
                         <IconButton>
@@ -195,224 +267,220 @@ function LinksDashboard() {
                 </>
             )
         },
+        {
+            field: 'share',
+            headerName: 'Share Affiliate Link',
+            sortable: false,
+            flex: 3.5,
+            renderCell: (params) => {
+                const shareURL = `${serverEndpoint}/links/r/${params.row._id}`;
+                const isCopied = copiedId === params.row._id;
+                
+                return (
+                    <div className="d-flex align-items-center gap-2 w-100" style={{ padding: '0 8px' }}>
+                        <div 
+                            className="bg-light px-2 py-1 rounded-2 border flex-grow-1"
+                            style={{ 
+                                fontSize: '12px', 
+                                whiteSpace: 'nowrap', 
+                                overflow: 'hidden', 
+                                textOverflow: 'ellipsis',
+                                maxWidth: '250px',
+                                color: '#64748b'
+                            }}
+                        >
+                            {shareURL}
+                        </div>
+                        <Tooltip title={isCopied ? "Copied!" : "Copy to clipboard"}>
+                            <IconButton 
+                                size="small" 
+                                color={isCopied ? "success" : "primary"}
+                                onClick={() => {
+                                    navigator.clipboard.writeText(shareURL);
+                                    setCopiedId(params.row._id);
+                                    setTimeout(() => setCopiedId(null), 2000);
+                                }}
+                                sx={{ border: '1px solid currentColor' }}
+                            >
+                                {isCopied ? <CheckIcon fontSize="small" /> : <ContentCopyIcon fontSize="small" />}
+                            </IconButton>
+                        </Tooltip>
+                    </div>
+                );
+            }
+        }
     ];
 
     return (
-        <div className="container py-4">
-            <div className="row justify-content-center">
-                <div className="col-12" style={{ maxWidth: 1400, margin: '0 auto' }}>
-                    <div
-                        className="bg-white rounded-4"
-                        style={{ padding: 36, marginTop: 40, boxShadow: '0 6px 32px 0 rgba(44, 62, 80, 0.18), 0 1.5px 6px 0 rgba(44, 62, 80, 0.10)' }}
-                    >
-                        <div className="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
-                            <div>
-                                <h2 className="mb-1" style={{ fontSize: '2rem', fontWeight: 600, color: '#2D3748' }}>
-                                    Manage Affiliate Links
-                                </h2>
-                                <div className="text-muted" style={{ fontSize: '1rem' }}>
-                                    View, add, and manage all your affiliate links in one place.
-                                </div>
-                            </div>
-                            {permission.canCreateLink && (
-                                <button
-                                    className="bg-primary text-white px-4 py-2 rounded-md shadow-sm border-0 fw-semibold"
-                                    style={{ background: '#2B6CB0', transition: 'background 0.2s' }}
-                                    onMouseOver={e => (e.currentTarget.style.background = '#24548a')}
-                                    onMouseOut={e => (e.currentTarget.style.background = '#2B6CB0')}
-                                    onClick={() => handleOpenModal(false)}
-                                >
-                                    + Add Link
-                                </button>
-                            )}
-                        </div>
-
-                        {errors.message && (
-                            <div className="alert alert-danger my-3" role="alert">
-                                {errors.message}
-                            </div>
-                        )}
-
-                        <div className="table-responsive" style={{ overflowX: 'auto', marginTop: 24 }}>
-                            <div style={{ height: 400, width: '100%' }}>
-                                <table className="table align-middle mb-0">
-                                    <thead>
-                                        <tr style={{ background: '#F7FAFC' }}>
-                                            <th className="text-uppercase text-sm fw-semibold text-secondary py-3" style={{ color: '#718096', letterSpacing: 1 }}>Campaign</th>
-                                            <th className="text-uppercase text-sm fw-semibold text-secondary py-3" style={{ color: '#718096', letterSpacing: 1 }}>URL</th>
-                                            <th className="text-uppercase text-sm fw-semibold text-secondary py-3" style={{ color: '#718096', letterSpacing: 1 }}>Category</th>
-                                            <th className="text-uppercase text-sm fw-semibold text-secondary py-3" style={{ color: '#718096', letterSpacing: 1 }}>Clicks</th>
-                                            <th className="text-uppercase text-sm fw-semibold text-secondary py-3 text-end" style={{ color: '#718096', letterSpacing: 1, minWidth: 120 }}>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {linksData.length === 0 && (
-                                            <tr>
-                                                <td colSpan={5} className="text-center text-muted py-4">No affiliate links found.</td>
-                                            </tr>
-                                        )}
-                                        {linksData.map((row, idx) => (
-                                            <tr
-                                                key={row._id}
-                                                style={{ background: idx % 2 === 0 ? '#fff' : '#F7FAFC', transition: 'background 0.2s' }}
-                                                className="table-row"
-                                            >
-                                                <td className="fw-semibold" style={{ color: '#2D3748' }}>{row.campaignTitle}</td>
-                                                <td>
-                                                    <a
-                                                        href={`${serverEndpoint}/links/r/${row._id}`}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="text-decoration-none"
-                                                        style={{ color: '#2B6CB0', wordBreak: 'break-all' }}
-                                                        onMouseOver={e => (e.currentTarget.style.textDecoration = 'underline')}
-                                                        onMouseOut={e => (e.currentTarget.style.textDecoration = 'none')}
-                                                    >
-                                                        {row.originalUrl}
-                                                    </a>
-                                                </td>
-                                                <td style={{ color: '#2D3748' }}>{row.category}</td>
-                                                <td style={{ color: '#2D3748' }}>{row.clickCount}</td>
-                                                <td className="text-end">
-                                                    {permission.canEditLink && (
-                                                        <Tooltip title="Edit" arrow>
-                                                            <span>
-                                                                <IconButton
-                                                                    onClick={() => handleOpenModal(true, row)}
-                                                                    style={{ color: '#718096', transition: 'color 0.2s, background 0.2s', borderRadius: '50%' }}
-                                                                    onMouseOver={e => (e.currentTarget.style.color = '#2B6CB0')}
-                                                                    onMouseOut={e => (e.currentTarget.style.color = '#718096')}
-                                                                >
-                                                                    <EditIcon />
-                                                                </IconButton>
-                                                            </span>
-                                                        </Tooltip>
-                                                    )}
-                                                    {permission.canDeleteLink && (
-                                                        <Tooltip title="Delete" arrow>
-                                                            <span>
-                                                                <IconButton
-                                                                    onClick={() => handleShowDeleteModal(row._id)}
-                                                                    style={{ color: '#718096', transition: 'color 0.2s, background 0.2s', borderRadius: '50%' }}
-                                                                    onMouseOver={e => (e.currentTarget.style.color = '#E53E3E')}
-                                                                    onMouseOut={e => (e.currentTarget.style.color = '#718096')}
-                                                                >
-                                                                    <DeleteIcon />
-                                                                </IconButton>
-                                                            </span>
-                                                        </Tooltip>
-                                                    )}
-                                                    {permission.canViewLink && (
-                                                        <Tooltip title="View Analytics" arrow>
-                                                            <span>
-                                                                <IconButton
-                                                                    onClick={() => navigate(`/analytics/${row._id}`)}
-                                                                    style={{ color: '#718096', transition: 'color 0.2s, background 0.2s', borderRadius: '50%' }}
-                                                                    onMouseOver={e => (e.currentTarget.style.color = '#2B6CB0')}
-                                                                    onMouseOut={e => (e.currentTarget.style.color = '#718096')}
-                                                                >
-                                                                    <AssessmentIcon />
-                                                                </IconButton>
-                                                            </span>
-                                                        </Tooltip>
-                                                    )}
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-
-                        <Modal show={showModal} onHide={() => handleCloseModal()}>
-                            <Modal.Header closeButton>
-                                <Modal.Title>
-                                    {isEdit ? (<>Update Link</>) : (<>Add Link</>)}
-                                </Modal.Title>
-                            </Modal.Header>
-
-                            <Modal.Body>
-                                <form onSubmit={handleSubmit}>
-                                    <div className="mb-3">
-                                        <label htmlFor="campaignTitle" className="form-label">Campaign Title</label>
-                                        <input
-                                            type="text"
-                                            className={`form-control ${errors.campaignTitle ? 'is-invalid' : ''}`}
-                                            id="campaignTitle"
-                                            name="campaignTitle"
-                                            value={formData.campaignTitle}
-                                            onChange={handleChange}
-                                        />
-                                        {errors.campaignTitle && (
-                                            <div className="invalid-feedback">
-                                                {errors.campaignTitle}
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    <div className="mb-3">
-                                        <label htmlFor="originalUrl" className="form-label">URL</label>
-                                        <input
-                                            type="text"
-                                            className={`form-control ${errors.originalUrl ? 'is-invalid' : ''}`}
-                                            id="originalUrl"
-                                            name="originalUrl"
-                                            value={formData.originalUrl}
-                                            onChange={handleChange}
-                                        />
-                                        {errors.originalUrl && (
-                                            <div className="invalid-feedback">
-                                                {errors.originalUrl}
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    <div className="mb-3">
-                                        <label htmlFor="category" className="form-label">Category</label>
-                                        <input
-                                            type="text"
-                                            className={`form-control ${errors.category ? 'is-invalid' : ''}`}
-                                            id="category"
-                                            name="category"
-                                            value={formData.category}
-                                            onChange={handleChange}
-                                        />
-                                        {errors.category && (
-                                            <div className="invalid-feedback">
-                                                {errors.category}
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    <div className="d-grid">
-                                        <button type="submit" className="btn btn-primary">Submit</button>
-                                    </div>
-                                </form>
-                            </Modal.Body>
-                        </Modal>
-
-                        <Modal show={showDeleteModal} onHide={() => handleCloseDeleteModal()}>
-                            <Modal.Header closeButton>
-                                <Modal.Title>Confirm Delete</Modal.Title>
-                            </Modal.Header>
-                            <Modal.Body>
-                                <p>Are you sure you want to delete the link?</p>
-                            </Modal.Body>
-                            <Modal.Footer>
-                                <button className='btn btn-secondary'
-                                    onClick={() => handleCloseDeleteModal()}
-                                >
-                                    Cancel
-                                </button>
-                                <button className='btn btn-danger'
-                                    onClick={() => handleDelete()}
-                                >
-                                    Delete
-                                </button>
-                            </Modal.Footer>
-                        </Modal>
-                    </div>
+        <div
+            className="d-flex align-items-center justify-content-center"
+            style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #f8fafc 0%, #e0e7ff 100%)' }}
+        >
+            <div className="p-5 bg-white rounded-4 shadow-lg w-100" style={{ maxWidth: 1100 }}>
+                <div className="d-flex justify-content-between mb-3 align-items-center">
+                    <h2 className="mb-0" style={{ fontWeight: 700, color: '#1e293b' }}>Manage Affiliate Links</h2>
+                    {permission.canCreateLink && (
+                        <button className="btn btn-primary btn-sm px-4 py-2" onClick={() => handleOpenModal(false)}>
+                            Add
+                        </button>
+                    )}
                 </div>
+                {errors.message && (
+                    <div className="alert alert-danger" role="alert">
+                        {errors.message}
+                    </div>
+                )}
+
+                <div className='mb-2'>
+                    <input
+                        type='text' className='form-control'
+                        placeholder='Enter Campaign title, Original URL, ot Category to search'
+                        onChange={(e) => {
+                            setSearchQuery(e.target.value);
+                            setcurrentPage(0); //Reset to 0 on fresh screen
+                        }}
+                    />
+                </div>
+
+                <div style={{ height: 500, width: '100%' }}>
+                    <DataGrid
+                        getRowId={(row) => row._id}
+                        rows={linksData}
+                        columns={columns}
+                        loading={loading}
+                        initialState={{
+                            pagination: {
+                                paginationModel: { pageSize: pageSize, page: currentPage }
+                            }
+                        }}
+                        pageSizeOptions={[2, 3, 4]}
+                        paginationMode='server'
+                        onPaginationModelChange={(newPage) => {
+                            setcurrentPage(newPage.page);
+                            setPageSize(newPage.pageSize);
+                        }}
+                        onPageSizeChange={(newPageSize) => {
+                            setPageSize(newPageSize);
+                            setcurrentPage(0);
+                        }}
+                        rowCount={totalRecords}
+                        sortingMode='server'
+                        sortModel={sortModel}
+                        onSortModelChange={(newModel) => {
+                            setSortModel(newModel);
+                            setcurrentPage(0);
+                        }}
+                        disableRowSelectionOnClick
+                        showToolbar
+                        sx={{
+                            fontFamily: 'inherit'
+                        }}
+                        density='compact'
+                    />
+                </div>
+
+                <Modal show={showModal} onHide={() => handleCloseModal()}>
+                    <Modal.Header closeButton>
+                        <Modal.Title>
+                            {isEdit ? (<>Update Link</>) : (<>Add Link</>)}
+                        </Modal.Title>
+                    </Modal.Header>
+
+                    <Modal.Body>
+                        <form onSubmit={handleSubmit}>
+                            <div className="mb-3">
+                                <label htmlFor="campaignTitle" className="form-label">Campaign Title</label>
+                                <input
+                                    type="text"
+                                    className={`form-control ${errors.campaignTitle ? 'is-invalid' : ''}`}
+                                    id="campaignTitle"
+                                    name="campaignTitle"
+                                    value={formData.campaignTitle}
+                                    onChange={handleChange}
+                                />
+                                {errors.campaignTitle && (
+                                    <div className="invalid-feedback">
+                                        {errors.campaignTitle}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="mb-3">
+                                <label htmlFor="originalUrl" className="form-label">URL</label>
+                                <input
+                                    type="text"
+                                    className={`form-control ${errors.originalUrl ? 'is-invalid' : ''}`}
+                                    id="originalUrl"
+                                    name="originalUrl"
+                                    value={formData.originalUrl}
+                                    onChange={handleChange}
+                                />
+                                {errors.originalUrl && (
+                                    <div className="invalid-feedback">
+                                        {errors.originalUrl}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="mb-3">
+                                <label htmlFor="category" className="form-label">Category</label>
+                                <input
+                                    type="text"
+                                    className={`form-control ${errors.category ? 'is-invalid' : ''}`}
+                                    id="category"
+                                    name="category"
+                                    value={formData.category}
+                                    onChange={handleChange}
+                                />
+                                {errors.category && (
+                                    <div className="invalid-feedback">
+                                        {errors.category}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className='mb-2'>
+                                <label htmlFor='thumbnail'>Thumbnail</label>
+                                <input type='file' accept='image/*'
+                                    className='form-control'
+                                    onChange={(e) => {
+                                        const file = e.target.files[0];
+                                        if (file) {
+                                            setThumbnailFile(file);
+                                            setPreviewUrl(URL.createObjectURL(file));
+                                        }
+                                    }}
+                                />
+                                {previewUrl && (
+                                    <img src={previewUrl} alt='preview'
+                                        className='img-responsive border rounded-2'
+                                    />
+                                )}
+                            </div>
+
+                            <div className="d-grid">
+                                <button type="submit" className="btn btn-primary">Submit</button>
+                            </div>
+                        </form>
+                    </Modal.Body>
+                </Modal>
+
+                <Modal show={showDeleteModal} onHide={() => handleCloseDeleteModal()}>
+                    <Modal.Header closeButton>
+                        <Modal.Title>Confirm Delete</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>
+                        <p>Are you sure you want to delete the link?</p>
+                    </Modal.Body>
+                    <Modal.Footer>
+                        <button className='btn btn-secondary' onClick={() => handleCloseDeleteModal()}>
+                            Cancel
+                        </button>
+                        <button className='btn btn-danger' onClick={() => handleDelete()}>
+                            Delete
+                        </button>
+                    </Modal.Footer>
+                </Modal>
             </div>
         </div>
     );

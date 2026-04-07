@@ -14,7 +14,7 @@ function Footer() {
   justifyContent: 'center'
 }}>
   <div className="container text-center">
-    <span>All rights reserved. Affiliate++ &copy; {new Date().getFullYear()}</span>
+    <span>All rights reserved. LinkSage &copy; {new Date().getFullYear()}</span>
   </div>
 </div>
     );
