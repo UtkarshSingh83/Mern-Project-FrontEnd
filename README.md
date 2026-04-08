@@ -18,7 +18,7 @@ Database: MongoDB
 Authentication: JWT, OAuth
 Others: Secure Payment Gateway Integration
 
-📊 Dashboard Preview
+📊 Dashboard
 
 The dashboard provides:
 Click-through rate (CTR) insights
