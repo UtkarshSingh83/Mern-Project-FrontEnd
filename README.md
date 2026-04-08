@@ -1,6 +1,6 @@
-Affiliate++
+LinkSage
 
-Affiliate++ is a full-stack affiliate link management platform that empowers users to create, customize, and track affiliate links with real-time performance analytics and secure access control.
+LinkSage is a full-stack affiliate link management platform that empowers users to create, customize, and track affiliate links with real-time performance analytics and secure access control.
 
 🚀 Features
 
